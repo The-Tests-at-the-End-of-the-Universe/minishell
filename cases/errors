@@ -1,0 +1,32 @@
+# syntax error cases
+|
+>
+<
+# $ works but tester does not handle extra $ well in output
+#$
+lol
+wat
+nu
+$1
+echo "test
+echo 'test
+echo "test"'
+echo "test"'
+ls | ls <
+| ls | cat
+    | echo test | cat -e
+echo >>>>
+echo >>>
+the next testscase is a special case in bash and note handled like bash
+cat <<<
+the next testscase is a special case in bash and note handled like bash
+cat <<<<
+echo test | <
+echo test |<
+the next testscase is a special case in bash and note handled like bash
+echo test | <>
+echo test | <<
+the next testscase is a special case in bash and note handled like bash
+echo test || <<
+""
+''
