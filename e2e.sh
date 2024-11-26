@@ -324,14 +324,14 @@ bash interactive.sh 1 0
 fi
 fi
 
-minishelldir=$(cd ../../ && pwd)
+minishelldir=$(cd ../ && pwd)
 
 #prepare minishell
-make -C $minishelldir test
+make -C $minishelldir 
 
 #prepare files
 chmod 000 $noaccess
-minishell=$(find ../../../ -type f -name minishell)
+minishell=$(find ../ -type f -name minishell)
 cases="./cases"
 files_temp=./files_temp
 files=./files
@@ -373,6 +373,10 @@ if [[ $check_cases == 1 ]]; then
 	fi
 fi
 
+
+PROMPT=$(echo -e "\nexit\n" | $minishell| head -n 1 | sed "s/\x1B\[[0-9;]\{1,\}[A-Za-z]//g" )
+REMOVE_EXIT="grep -v ^exit$"
+
 echo -e "${BCYN}$case${RESET}"
 while IFS= read -r line; do
 	if [[ "${line:0:1}" == "#" ]];
@@ -385,12 +389,9 @@ while IFS= read -r line; do
 	cp -r $files/* $files_temp/ &>> $MS_LOG
 	rm -rf $outfiles/*
 	rm -rf $mini_outfiles/*
-	MINI_OUTPUT=$(echo -e "$line" | $minishell 2>>$MS_LOG)
+	MINI_OUTPUT=$(echo -e "$line" | $minishell 2>>$MS_LOG | grep -vF "$PROMPT" | $REMOVE_EXIT )
 	MINI_EXIT_CODE=$(echo -e "$line" | $minishell &>> /dev/null ; echo $?)
 	MINI_EXIT_CODE=$(echo "${MINI_EXIT_CODE##* }" | tail -1)
-	MINI_OUTPUT=${MINI_OUTPUT#*"$line"}
-	MINI_OUTPUT=${MINI_OUTPUT%'minishell:~$ '}
-	MINI_OUTPUT=$(echo $MINI_OUTPUT | xargs -0)
 	MINI_OUTFILES=$(cp -r $outfiles/* $mini_outfiles &>> $MS_LOG)
 	MINI_ERROR_MSG=$(trap "" PIPE && echo "$line" | $minishell 2>&1 >> $MS_LOG | grep -oa '[^:]*$' | tr -d '\0' | head -n1)
 	if [ $memory = 1 ]; then
@@ -413,7 +414,6 @@ while IFS= read -r line; do
 	rm -rf $outfiles/*
 	rm -rf $bash_outfiles/*
 	BASH_OUTPUT=$(echo -e "$line" | bash 2>>$MS_LOG)
-	BASH_OUTPUT=$(echo $BASH_OUTPUT | xargs -0)
 	echo $BASH_OUTPUT &>> $MS_LOG
 	BASH_EXIT_CODE=$(echo -e "$line" | bash 2>> $MS_LOG ; echo $?)
 	BASH_EXIT_CODE=$(echo "${BASH_EXIT_CODE##* }" | tail -1)
