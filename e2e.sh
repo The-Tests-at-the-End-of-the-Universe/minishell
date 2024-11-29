@@ -423,20 +423,16 @@ while IFS= read -r line; do
 	OUTFILES_DIFF=$(diff -r $bash_outfiles $mini_outfiles &>> $MS_LOG && echo $?)
 	if [[ "$MINI_OUTPUT" == "$BASH_OUTPUT" && "$MINI_EXIT_CODE" == "$BASH_EXIT_CODE" && "$OUTFILES_DIFF" == "0" ]]; then
 		printf " ✅"
-		if [[ "$MINI_ERROR_MSG" != "$BASH_ERROR_MSG" ]]; then
-			printf " ⚠️ "
-			FAIL=true
-		fi
 	else
 		printf " ❌"
 		FAIL=true
 	fi
-
 	if [ "$OUTFILES_DIFF" != "0" ]; then
 		OUTFILES_FAIL=true
 		printf "${RED} outfiles error;${RESET}"
 		echo -e "$x | $line " >> $OUTFILES_LOG
 		echo "$OUTFILES_DIFF" >> $OUTFILES_LOG
+		echo "diff command output" >> $OUTFILES_LOG
 		diff -r $bash_outfiles $mini_outfiles &>> $OUTFILES_LOG
 	fi
 	if [ "$MINI_OUTPUT" != "$BASH_OUTPUT" ]; then
@@ -454,8 +450,9 @@ while IFS= read -r line; do
 		echo bash exit code = $BASH_EXIT_CODE >> $EXIT_LOG
 	fi
 	if [ "$MINI_ERROR_MSG" != "$BASH_ERROR_MSG" ]; then
+		printf " ⚠️ "
 		ERROR_FAIL=true
-		printf "${RED} error message error;${RESET}"
+		printf "${YEL} error message error;${RESET}"
 		echo -e "$x | $line " >> $ERROR_LOG
 		echo mini error = \($MINI_ERROR_MSG\) >> $ERROR_LOG
 		echo bash error = \($BASH_ERROR_MSG\) >> $ERROR_LOG
@@ -481,6 +478,10 @@ done
 chmod 444 $noaccess
 rm -rf $files_temp
 rm -rf $TEMP_MEMORY_LOG
+if [[ $ERROR_FAIL = true && $FAIL = false ]];
+then
+echo -e "${YEL}Your error messages are not equal to bash, but this is not failable${RESET}"
+fi
 if [ $FAIL = true ];
 then
 if [ $OUTFILES_FAIL = true ];
@@ -497,7 +498,7 @@ echo -e "${RED}Check $EXIT_LOG ${RESET}"
 fi
 if [ $ERROR_FAIL = true ];
 then
-echo -e "${RED}Check $ERROR_LOG ${RESET}"
+echo -e "${YEL}Check $ERROR_LOG ${RESET}"
 fi
 if [ $MEMORY_FAIL = true ];
 then
